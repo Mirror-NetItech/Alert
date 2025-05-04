@@ -1,38 +1,326 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Viewport Width Capture</title>
+  <title>Viewport Data Logger</title>
+  <style>
+    body {
+      background-color: #f0f4f8;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      text-align: center;
+      color: #444;
+      text-shadow: 1px 1px 2px #fff;
+    }
+
+    button {
+      background: #f0f4f8;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      margin: 10px 0;
+      box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #fff;
+      cursor: pointer;
+      font-weight: bold;
+      color: #555;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      box-shadow: inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #fff;
+    }
+
+    #dataContainer {
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: sans-serif;
+      width: 80%;
+      max-width: 800px;
+      box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #fff;
+      background-color: #f0f4f8;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .dataRow {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #fff;
+      background-color: #f0f4f8;
+    }
+
+    .dataLabel {
+      font-weight: bold;
+      margin-right: 5px;
+      color: #777;
+    }
+
+    #clearButton,
+    #restoreButton {
+      margin-left: 10px;
+      background-color: #f0f4f8;
+    }
+
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modalContent {
+      background-color: #f0f4f8;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #fff;
+      width: 80%;
+      max-width: 600px;
+    }
+
+    #modalList {
+      list-style: none;
+      padding: 0;
+    }
+
+    #modalList li {
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #fff;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+
+    #modalList li:hover {
+      background-color: #e0e8ef;
+    }
+
+    #modalClose {
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+            font-size: 1.5em;
+    }
+
+    #clearContainer {
+      margin-top: 10px;
+      text-align: center; /* Centers the buttons horizontally */
+    }
+  </style>
 </head>
 <body>
 
-  <p id="viewportWidthDisplay">Viewport Width: Loading...</p>
+  <h1>Viewport Data Logger</h1>
+
+  <button id="captureButton">Capture Viewport Data</button>
+
+  <div id="dataContainer">
+    <h2>Recorded Data</h2>
+  </div>
+   <div id="clearContainer">
+    <button id="clearButton">Clear Last</button>
+    <button id="restoreButton">Recycle Bin</button>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal">
+    <div id="modalContent">
+      <span id="modalClose">&times;</span>
+      <h2>Restore Data</h2>
+      <ul id="modalList"></ul>
+    </div>
+  </div>
 
   <script>
-    function captureViewportWidth() {
-      // 1. Get the viewport width
-      const viewportWidth = window.innerWidth;
+    function getDeviceInfo() {
+      const userAgent = navigator.userAgent;
+      let device = "Unknown Device";
 
-      // 2. Display it in a paragraph
-      const displayElement = document.getElementById("viewportWidthDisplay");
-      displayElement.textContent = "Viewport Width: " + viewportWidth + "px";
+      if (/Android/i.test(userAgent)) {
+        device = "Android";
+      } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        device = "iOS";
+      } else if (/Windows Phone/i.test(userAgent)) {
+        device = "Windows Phone";
+      } else if (/Macintosh|Mac OS X/i.test(userAgent)) {
+        device = "Desktop (Mac)";
+      } else if (/Windows NT/i.test(userAgent)) {
+        device = "Desktop (Windows)";
+      }
 
-      // 3. Store it in local storage
-      localStorage.setItem("viewportWidth", viewportWidth);
+      let desktopMode = false;
+      if (screen.width > 1024) {
+        desktopMode = true;
+      }
+
+      return {
+        device: device,
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        desktopMode: desktopMode
+      };
     }
 
-    // 4. Function to retrieve the value from local storage and display it
-    function displayStoredViewportWidth() {
-      const storedWidth = localStorage.getItem("viewportWidth");
-      if (storedWidth) {
-        const displayElement = document.getElementById("viewportWidthDisplay");
-        displayElement.textContent = "Viewport Width: " + storedWidth + "px (Stored)";
+    function generateDeviceId(deviceInfo) {
+      //Unique ID based on device and screen properties
+      return `${deviceInfo.device}-${deviceInfo.screenWidth}x${deviceInfo.screenHeight}-${deviceInfo.desktopMode}`;
+    }
+
+    function captureViewportData() {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;  //Capture view port height
+      const now = new Date();
+      const deviceInfo = getDeviceInfo();
+      const deviceId = generateDeviceId(deviceInfo);
+      const orientation = screen.orientation && screen.orientation.type ? screen.orientation.type : (window.innerWidth > window.innerHeight ? 'landscape' : 'portrait'); // Get the right values depending on the browser
+
+      let storedData = localStorage.getItem("viewportData");
+            let dataArray = storedData ? JSON.parse(storedData) : [];
+
+      //Check if this device ID is already in the storage
+      const alreadyExists = dataArray.some(item => generateDeviceId(item) === deviceId && item.orientation === orientation);
+
+      if (!alreadyExists) {
+        const data = {
+          timestamp: now.toLocaleString(),
+          device: deviceInfo.device,
+          desktopMode: deviceInfo.desktopMode,
+          screenWidth: deviceInfo.screenWidth,
+          screenHeight: deviceInfo.screenHeight,
+          viewportWidth: viewportWidth,
+          viewportHeight: viewportHeight, // Store the viewport height
+          orientation: orientation
+        };
+        dataArray.push(data);
+        localStorage.setItem("viewportData", JSON.stringify(dataArray));
+        displayData(); // Refresh the display
+      } else {
+        alert("Data for this device already exists with the same orientation."); // Inform the user
       }
     }
 
-    // Execute both functions
-    captureViewportWidth();
-    displayStoredViewportWidth(); // Retrieve from local storage if available
+    function displayData() {
+      const dataContainer = document.getElementById("dataContainer");
+      dataContainer.innerHTML = "<h2>Recorded Data</h2>";
 
+      let storedData = localStorage.getItem("viewportData");
+      if (storedData) {
+        let dataArray = JSON.parse(storedData);
+
+        dataArray.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "dataRow";
+
+          let desktopModeStr = item.desktopMode ? "Yes" : "No";
+
+          row.innerHTML = `
+            <span class="dataLabel">Timestamp:</span> ${item.timestamp}<br>
+            <span class="dataLabel">Device:</span> ${item.device}<br>
+            <span class="dataLabel">Desktop Mode:</span> ${desktopModeStr}<br>
+             <span class="dataLabel">Orientation:</span> ${item.orientation}<br>
+            <span class="dataLabel">Screen Resolution:</span> ${item.screenWidth}x${item.screenHeight}<br>
+            <span class="dataLabel">Viewport Width:</span> ${item.viewportWidth}px<br>
+             <span class="dataLabel">Viewport Height:</span> ${item.viewportHeight}px
+          `;
+          dataContainer.appendChild(row);
+        });
+      } else {
+        dataContainer.innerHTML += "<p>No data recorded yet.</p>";
+      }
+    }
+
+    //Recycle bin/Clear data:
+    let recycleBin = [];
+
+    function clearLastEntry() {
+      let storedData = localStorage.getItem("viewportData");
+      if (storedData) {
+        let dataArray = JSON.parse(storedData);
+        if (dataArray.length > 0) {
+          let removedItem = dataArray.pop();
+          recycleBin.push(removedItem);
+          localStorage.setItem("viewportData", JSON.stringify(dataArray));
+          localStorage.setItem("recycleBin", JSON.stringify(recycleBin));
+          displayData();
+        }
+      }
+    }
+
+    function displayRestoreOptions() {
+      const modal = document.getElementById("modal");
+      const modalList = document.getElementById("modalList");
+      modalList.innerHTML = ""; // Clear previous options
+
+      let storedRecycleBin = localStorage.getItem("recycleBin");
+      let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
+
+      if (recycleBinItems.length > 0) {
+        recycleBinItems.forEach((item, index) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = `Device: ${item.device}, Timestamp: ${item.timestamp}`;
+          listItem.addEventListener("click", () => restoreItem(index));
+          modalList.appendChild(listItem);
+        });
+        modal.style.display = "flex"; // Show the modal
+      } else {
+        alert("Recycle bin is empty.");
+      }
+    }
+
+    function restoreItem(index) {
+      let storedRecycleBin = localStorage.getItem("recycleBin");
+      let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
+
+      if (index >= 0 && index < recycleBinItems.length) {
+        let itemToRestore = recycleBinItems[index];
+        recycleBinItems.splice(index, 1); // Remove from recycle bin
+
+        let storedData = localStorage.getItem("viewportData");
+        let dataArray = storedData ? JSON.parse(storedData) : [];
+        dataArray.push(itemToRestore); // Add to main data
+
+        localStorage.setItem("viewportData", JSON.stringify(dataArray));
+        localStorage.setItem("recycleBin", JSON.stringify(recycleBinItems));
+        displayData();
+        closeModal(); //Close the modal
+      }
+    }
+
+    //Modal function:
+    function closeModal() {
+      const modal = document.getElementById("modal");
+      modal.style.display = "none";
+    }
+
+    //Device orientation:
+
+    // Event listeners for the buttons
+    document.getElementById("captureButton").addEventListener("click", captureViewportData);
+    document.getElementById("clearButton").addEventListener("click", clearLastEntry);
+    document.getElementById("restoreButton").addEventListener("click", displayRestoreOptions);
+
+    // Event listener to close the modal
+    document.getElementById("modalClose").addEventListener("click", closeModal);
+    //Initial display of data from localStorage (if any)
+    displayData();
   </script>
+
 </body>
 </html>
