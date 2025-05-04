@@ -1,21 +1,38 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Viewport Width determiner</title>
+  <title>Viewport Width Capture</title>
 </head>
-
 <body>
-  
+
+  <p id="viewportWidthDisplay">Viewport Width: Loading...</p>
+
   <script>
+    function captureViewportWidth() {
+      // 1. Get the viewport width
+      const viewportWidth = window.innerWidth;
 
+      // 2. Display it in a paragraph
+      const displayElement = document.getElementById("viewportWidthDisplay");
+      displayElement.textContent = "Viewport Width: " + viewportWidth + "px";
 
-                alert("Viewport Width: " + window.innerWidth + "px");
-        
-    
+      // 3. Store it in local storage
+      localStorage.setItem("viewportWidth", viewportWidth);
+    }
+
+    // 4. Function to retrieve the value from local storage and display it
+    function displayStoredViewportWidth() {
+      const storedWidth = localStorage.getItem("viewportWidth");
+      if (storedWidth) {
+        const displayElement = document.getElementById("viewportWidthDisplay");
+        displayElement.textContent = "Viewport Width: " + storedWidth + "px (Stored)";
+      }
+    }
+
+    // Execute both functions
+    captureViewportWidth();
+    displayStoredViewportWidth(); // Retrieve from local storage if available
+
   </script>
 </body>
-
 </html>
