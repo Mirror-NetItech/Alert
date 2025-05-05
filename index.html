@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Viewport Data Logger</title>
   <style>
@@ -72,6 +73,81 @@
       background-color: #f0f4f8;
     }
 
+    #modalContent {
+      background-color: #f0f4f8;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #fff;
+      width: 80%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    #modalList {
+      list-style: none;
+      padding: 0;
+    }
+
+    .modalListItem {
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #fff;
+      margin-bottom: 5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modalListItem:hover {
+      background-color: #e0e8ef;
+    }
+
+    /* Style for the checkbox */
+    .deleteCheckbox {
+      margin-left: 10px;
+    }
+
+    /* Position the close button */
+    #modalClose {
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 1.5em;
+    }
+        /* Container for action buttons at the bottom of the modal */
+    #modalActions {
+      margin-top: 20px;
+      text-align: right;
+      /* Aligns buttons to the right */
+    }
+
+    /* Styles for buttons in the modal (Clear Selected, Clear All) */
+    .modalButton {
+      background: #f0f4f8;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      margin: 10px 0 10px 10px;
+      /* Adds spacing to the left */
+      box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #fff;
+      cursor: pointer;
+      font-weight: bold;
+      color: #555;
+      transition: all 0.3s ease;
+    }
+
+    .modalButton:hover {
+      box-shadow: inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #fff;
+    }
+
+    #clearContainer {
+      margin-top: 10px;
+      text-align: center;
+      /* Centers the buttons horizontally */
+    }
+
     #modal {
       display: none;
       position: fixed;
@@ -85,46 +161,32 @@
       justify-content: center;
     }
 
-    #modalContent {
-      background-color: #f0f4f8;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #fff;
-      width: 80%;
-      max-width: 600px;
-    }
-
-    #modalList {
-      list-style: none;
-      padding: 0;
-    }
-
-    #modalList li {
-      padding: 10px;
+    .device-container {
+      margin-bottom: 10px;
       border-radius: 5px;
-      box-shadow: inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #fff;
-      margin-bottom: 5px;
-      cursor: pointer;
+      box-shadow: 2px 2px 5px #d1d9e6, -2px -2px 5px #fff;
+      background-color: #f0f4f8;
+      overflow: hidden;
+      /* Ensures the container properly wraps content */
     }
 
-    #modalList li:hover {
+    .device-summary {
+      padding: 10px;
+      cursor: pointer;
       background-color: #e0e8ef;
+      border-bottom: 1px solid #d1d9e6;
     }
 
-    #modalClose {
-      cursor: pointer;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-            font-size: 1.5em;
+    .device-summary:hover {
+      background-color: #d0d8df;
     }
 
-    #clearContainer {
-      margin-top: 10px;
-      text-align: center; /* Centers the buttons horizontally */
+    .stored-data {
+      padding: 10px;
     }
   </style>
 </head>
+
 <body>
 
   <h1>Viewport Data Logger</h1>
@@ -134,7 +196,7 @@
   <div id="dataContainer">
     <h2>Recorded Data</h2>
   </div>
-   <div id="clearContainer">
+  <div id="clearContainer">
     <button id="clearButton">Clear Last</button>
     <button id="restoreButton">Recycle Bin</button>
   </div>
@@ -147,180 +209,305 @@
       <ul id="modalList"></ul>
     </div>
   </div>
+ <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize recycleBin from localStorage or create an empty array      let recycleBin = JSON.parse(localStorage.getItem("recycleBin")) || [];
 
-  <script>
-    function getDeviceInfo() {
-      const userAgent = navigator.userAgent;
-      let device = "Unknown Device";
+      // Helper function to get device information
+      function getDeviceInfo() {
+        const userAgent = navigator.userAgent;
+        let device = "Unknown Device";
+        let os = "Unknown OS";
+        let browser = "Unknown Browser";
+        let desktopMode = false;
+        let screenWidth = screen.width;
+        let screenHeight = screen.height;
 
-      if (/Android/i.test(userAgent)) {
-        device = "Android";
-      } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
-        device = "iOS";
-      } else if (/Windows Phone/i.test(userAgent)) {
-        device = "Windows Phone";
-      } else if (/Macintosh|Mac OS X/i.test(userAgent)) {
-        device = "Desktop (Mac)";
-      } else if (/Windows NT/i.test(userAgent)) {
-        device = "Desktop (Windows)";
-      }
+        // Device and OS Detection
+        if (/Android/i.test(userAgent)) {
+          device = "Android";
+          os = "Android";
+        } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+          device = "iOS";
+          os = "iOS";
+        } else if (/Windows Phone/i.test(userAgent)) {
+          device = "Windows Phone";
+          os = "Windows Phone";
+        } else if (/Macintosh|Mac OS X/i.test(userAgent)) {
+          device = "Desktop (Mac)";
+          os = "MacOS";
+        } else if (/Windows NT/i.test(userAgent)) {
+          device = "Desktop (Windows)";
+          os = "Windows";
+        }
 
-      let desktopMode = false;
-      if (screen.width > 1024) {
-        desktopMode = true;
-      }
+        // Browser Detection (example - extend as needed)
+        if (/Chrome/i.test(userAgent)) {
+          browser = "Chrome";
+        } else if (/Firefox/i.test(userAgent)) {
+          browser = "Firefox";
+        } else if (/Safari/i.test(userAgent)) {
+          browser = "Safari";
+        } else if (/Edge/i.test(userAgent)) {
+          browser = "Edge";
+        }
 
-      return {
-        device: device,
-        screenWidth: screen.width,
-        screenHeight: screen.height,
-        desktopMode: desktopMode
-      };
-    }
+        // Check for desktop mode (basic check, may need refinement)
+        if (screenWidth > 1024) {desktopMode = true;
+        }
 
-    function generateDeviceId(deviceInfo) {
-      //Unique ID based on device and screen properties
-      return `${deviceInfo.device}-${deviceInfo.screenWidth}x${deviceInfo.screenHeight}-${deviceInfo.desktopMode}`;
-    }
-
-    function captureViewportData() {
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;  //Capture view port height
-      const now = new Date();
-      const deviceInfo = getDeviceInfo();
-      const deviceId = generateDeviceId(deviceInfo);
-      const orientation = screen.orientation && screen.orientation.type ? screen.orientation.type : (window.innerWidth > window.innerHeight ? 'landscape' : 'portrait'); // Get the right values depending on the browser
-
-      let storedData = localStorage.getItem("viewportData");
-            let dataArray = storedData ? JSON.parse(storedData) : [];
-
-      //Check if this device ID is already in the storage
-      const alreadyExists = dataArray.some(item => generateDeviceId(item) === deviceId && item.orientation === orientation);
-
-      if (!alreadyExists) {
-        const data = {
-          timestamp: now.toLocaleString(),
-          device: deviceInfo.device,
-          desktopMode: deviceInfo.desktopMode,
-          screenWidth: deviceInfo.screenWidth,
-          screenHeight: deviceInfo.screenHeight,
-          viewportWidth: viewportWidth,
-          viewportHeight: viewportHeight, // Store the viewport height
-          orientation: orientation
+        return {
+          device: device,
+          os: os,
+          browser: browser,
+          screenWidth: screenWidth,
+          screenHeight: screenHeight,
+          desktopMode: desktopMode
         };
-        dataArray.push(data);
-        localStorage.setItem("viewportData", JSON.stringify(dataArray));
-        displayData(); // Refresh the display
-      } else {
-        alert("Data for this device already exists with the same orientation."); // Inform the user
       }
-    }
 
-    function displayData() {
-      const dataContainer = document.getElementById("dataContainer");
-      dataContainer.innerHTML = "<h2>Recorded Data</h2>";
+      // Function to generate a unique device ID
+      function generateDeviceId(deviceInfo, orientation, desktopMode) {
+        return `${deviceInfo.device}-${deviceInfo.screenWidth}x${deviceInfo.screenHeight}-${orientation}-${desktopMode ? 'DesktopMode' : 'NormalMode'}`;
+      }
 
-      let storedData = localStorage.getItem("viewportData");
-      if (storedData) {
-        let dataArray = JSON.parse(storedData);
+      // Function to capture and store viewport data
+      function captureViewportData() {
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        const timestamp = new Date().toLocaleString();
+        const deviceInfo = getDeviceInfo();
+        const orientation = screen.orientation && screen.orientation.type ? screen.orientation.type : (window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+        // Detect desktop mode explicitly (e.g., from a checkbox or button)
+        let isDesktopMode = deviceInfo.desktopMode; // set a desktop mode variable if the device desktop is already in destop mode
 
-        dataArray.forEach(item => {
-          const row = document.createElement("div");
-          row.className = "dataRow";
+        const deviceId = generateDeviceId(deviceInfo, orientation, isDesktopMode);
 
-          let desktopModeStr = item.desktopMode ? "Yes" : "No";
+        // Check if data for this device already exists with the same orientation
+        let storedData = localStorage.getItem("viewportData");
+        let dataArray = storedData ? JSON.parse(storedData) : [];
 
-          row.innerHTML = `
-            <span class="dataLabel">Timestamp:</span> ${item.timestamp}<br>
-            <span class="dataLabel">Device:</span> ${item.device}<br>
-            <span class="dataLabel">Desktop Mode:</span> ${desktopModeStr}<br>
-             <span class="dataLabel">Orientation:</span> ${item.orientation}<br>
-            <span class="dataLabel">Screen Resolution:</span> ${item.screenWidth}x${item.screenHeight}<br>
-            <span class="dataLabel">Viewport Width:</span> ${item.viewportWidth}px<br>
-             <span class="dataLabel">Viewport Height:</span> ${item.viewportHeight}px
-          `;
-          dataContainer.appendChild(row);
+        const alreadyExists = dataArray.some(item => {
+          const itemDeviceId = generateDeviceId(item.deviceInfo, item.orientation, item.desktopMode);
+          return itemDeviceId === deviceId;
         });
-      } else {
-        dataContainer.innerHTML += "<p>No data recorded yet.</p>";
-      }
-    }
 
-    //Recycle bin/Clear data:
-    let recycleBin = [];
+        if (!alreadyExists) {
+          const viewportData = {
+            deviceInfo: deviceInfo,
+            viewportWidth: viewportWidth,
+            viewportHeight: viewportHeight,
+            timestamp: timestamp,
+            orientation: orientation,
+            desktopMode: isDesktopMode
+          };
 
-    function clearLastEntry() {
-      let storedData = localStorage.getItem("viewportData");
-      if (storedData) {
-        let dataArray = JSON.parse(storedData);
-        if (dataArray.length > 0) {
-          let removedItem = dataArray.pop();
-          recycleBin.push(removedItem);
+          dataArray.push(viewportData);
           localStorage.setItem("viewportData", JSON.stringify(dataArray));
-          localStorage.setItem("recycleBin", JSON.stringify(recycleBin));
           displayData();
+        } else {
+          alert("Data already exists for this device with the same settings.");
         }
       }
-    }
 
-    function displayRestoreOptions() {
-      const modal = document.getElementById("modal");
-      const modalList = document.getElementById("modalList");
-      modalList.innerHTML = ""; // Clear previous options
-
-      let storedRecycleBin = localStorage.getItem("recycleBin");
-      let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
-
-      if (recycleBinItems.length > 0) {
-        recycleBinItems.forEach((item, index) => {
-          const listItem = document.createElement("li");
-          listItem.textContent = `Device: ${item.device}, Timestamp: ${item.timestamp}`;
-          listItem.addEventListener("click", () => restoreItem(index));
-          modalList.appendChild(listItem);
-        });
-        modal.style.display = "flex"; // Show the modal
-      } else {
-        alert("Recycle bin is empty.");
-      }
-    }
-
-    function restoreItem(index) {
-      let storedRecycleBin = localStorage.getItem("recycleBin");
-      let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
-
-      if (index >= 0 && index < recycleBinItems.length) {
-        let itemToRestore = recycleBinItems[index];
-        recycleBinItems.splice(index, 1); // Remove from recycle bin
+      // Function to display the data from localStorage
+      function displayData() {
+        const dataContainer = document.getElementById("dataContainer");
+        dataContainer.innerHTML = "<h2>Recorded Data</h2>";
 
         let storedData = localStorage.getItem("viewportData");
         let dataArray = storedData ? JSON.parse(storedData) : [];
-        dataArray.push(itemToRestore); // Add to main data
 
-        localStorage.setItem("viewportData", JSON.stringify(dataArray));
-        localStorage.setItem("recycleBin", JSON.stringify(recycleBinItems));
-        displayData();
-        closeModal(); //Close the modal
+        if (dataArray.length === 0) {
+          dataContainer.innerHTML += "<p>No data recorded yet.</p>";
+          return;
+        }
+
+        dataArray.forEach((item, index) => {
+          const deviceId = generateDeviceId(item.deviceInfo, item.orientation, item.desktopMode);
+
+          const container = document.createElement('div');
+          container.classList.add('device-container');
+
+          // Display device information
+          const deviceSummary = document.createElement('div');
+          deviceSummary.classList.add('device-summary');
+          deviceSummary.innerHTML = `
+                <strong>${item.deviceInfo.device}</strong> -
+                OS: ${item.deviceInfo.os},
+                Browser: ${item.deviceInfo.browser} -
+                ${item.desktopMode ? 'Desktop Mode' : 'Normal Mode'} -
+                ${item.orientation}
+            `;
+          container.appendChild(deviceSummary);
+
+          // Stored data (initially hidden)
+          const storedDataContainer = document.createElement('div');
+          storedDataContainer.classList.add('stored-data');
+          storedDataContainer.style.display = 'none'; // Initially hidden
+
+          storedDataContainer.innerHTML = `
+                <span class="dataLabel">Device:</span> ${item.deviceInfo.device}<br>
+                <span class="dataLabel">OS:</span> ${item.deviceInfo.os}<br>
+                <span class="dataLabel">Browser:</span> ${item.deviceInfo.browser}<br>
+                <span class="dataLabel">Desktop Mode:</span> ${item.desktopMode ? 'Yes' : 'No'}<br>
+                <span class="dataLabel">Orientation:</span> ${item.orientation}<br>
+                <span class="dataLabel">Screen Resolution:</span> ${item.deviceInfo.screenWidth}x${item.deviceInfo.screenHeight}<br>
+                <span class="dataLabel">Viewport Width:</span> ${item.viewportWidth}px<br>
+                <span class="dataLabel">Viewport Height:</span> ${item.viewportHeight}px<br>
+                <span class="dataLabel">Timestamp:</span> ${item.timestamp}
+            `;
+
+          container.appendChild(storedDataContainer);
+          dataContainer.appendChild(container);
+
+          deviceSummary.addEventListener('click', () => {
+            if (storedDataContainer.style.display === 'none') {
+              storedDataContainer.style.display = 'block';
+            } else {
+              storedDataContainer.style.display = 'none';
+            }
+          });
+        });
       }
-    }
 
-    //Modal function:
-    function closeModal() {
-      const modal = document.getElementById("modal");
-      modal.style.display = "none";
-    }
+      // Function to clear the last entry
+      function clearLastEntry() {
+        let storedData = localStorage.getItem("viewportData");
+        if (storedData) {
+          let dataArray = JSON.parse(storedData);
+          if (dataArray.length > 0) {
+            let removedItem = dataArray.pop();
+            recycleBin.push(removedItem);
+            localStorage.setItem("viewportData", JSON.stringify(dataArray));
+            localStorage.setItem("recycleBin", JSON.stringify(recycleBin));
+            displayData();
+          }
+        }
+      }
 
-    //Device orientation:
+      // Function to display restore options in a modal
+      function displayRestoreOptions() {
+        const modal = document.getElementById("modal");
+        const modalList = document.getElementById("modalList");
+        modalList.innerHTML = ""; // Clear previous options
 
-    // Event listeners for the buttons
-    document.getElementById("captureButton").addEventListener("click", captureViewportData);
-    document.getElementById("clearButton").addEventListener("click", clearLastEntry);
-    document.getElementById("restoreButton").addEventListener("click", displayRestoreOptions);
+        let storedRecycleBin = localStorage.getItem("recycleBin");
+        let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
 
-    // Event listener to close the modal
-    document.getElementById("modalClose").addEventListener("click", closeModal);
-    //Initial display of data from localStorage (if any)
-    displayData();
+        if (recycleBinItems.length > 0) {
+          recycleBinItems.forEach((item, index) => {
+            const listItem = document.createElement("li");
+            listItem.classList.add("modalListItem");
+
+            // Create checkbox for selecting items
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.classList.add("deleteCheckbox");
+            checkbox.value = index; // Set the index as the value for easy identification
+
+            // Create text content for the list item
+            const itemText = document.createTextNode(`Device: ${item.deviceInfo.device}, Timestamp: ${item.timestamp}`);
+
+            // Append the checkbox and text to the list item
+            listItem.appendChild(checkbox);
+            listItem.appendChild(itemText);
+            listItem.addEventListener("click", () => restoreItem(index));
+            modalList.appendChild(listItem);
+          });
+
+          // Add action buttons at the end of the list
+          const modalActions = document.createElement("div");
+          modalActions.id = "modalActions";
+
+          const clearSelectedButton = document.createElement("button");
+          clearSelectedButton.textContent = "Clear Selected";
+          clearSelectedButton.classList.add("modalButton");
+          clearSelectedButton.addEventListener("click", clearSelectedItems);
+
+          const clearAllButton = document.createElement("button");
+          clearAllButton.textContent = "Clear All";
+          clearAllButton.classList.add("modalButton");
+          clearAllButton.addEventListener("click", clearAllItems);
+
+          modalActions.appendChild(clearSelectedButton);
+          modalActions.appendChild(clearAllButton);
+          modalList.appendChild(modalActions);
+
+          modal.style.display = "flex"; // Show the modal
+        } else {
+          alert("Recycle bin is empty.");
+        }
+      }
+
+      // Function to clear selected items in modal
+      function clearSelectedItems() {
+        let storedRecycleBin = localStorage.getItem("recycleBin");
+        let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
+        const modalList = document.getElementById("modalList");
+        const checkboxes = modalList.querySelectorAll('input[type="checkbox"]:checked');
+
+        let indexesToDelete = Array.from(checkboxes).map(checkbox => parseInt(checkbox.value)).sort((a, b) => b - a);
+        if (indexesToDelete.length > 0) {
+          if (confirm("Are you sure you want to delete the selected items permanently?")) {
+            indexesToDelete.forEach(index => {
+              recycleBinItems.splice(index, 1); // Remove the items
+            });
+            localStorage.setItem("recycleBin", JSON.stringify(recycleBinItems));
+            displayRestoreOptions(); // Refresh the modal
+          }
+        } else {
+          alert("No items selected to clear.");
+        }
+      }
+
+      // Function to clear all items in recycle bin
+      function clearAllItems() {
+        if (confirm("Are you sure you want to clear all items permanently from the recycle bin?")) {
+          localStorage.removeItem("recycleBin"); // Clear the recycle bin
+          displayRestoreOptions(); // Refresh the modal
+        }
+      }
+
+      // Function to restore an item from the recycle bin
+      function restoreItem(index) {
+        let storedRecycleBin = localStorage.getItem("recycleBin");
+        let recycleBinItems = storedRecycleBin ? JSON.parse(storedRecycleBin) : [];
+
+        if (index >= 0 && index < recycleBinItems.length) {
+          let itemToRestore = recycleBinItems[index];
+          recycleBinItems.splice(index, 1); // Remove from recycle bin
+
+          let storedData = localStorage.getItem("viewportData");
+          let dataArray = storedData ? JSON.parse(storedData) : [];
+          dataArray.push(itemToRestore); // Add to main data
+
+          localStorage.setItem("viewportData", JSON.stringify(dataArray));
+          localStorage.setItem("recycleBin", JSON.stringify(recycleBinItems));
+          displayData();
+          closeModal(); //Close the modal
+        }
+      }
+
+      // Function to close the modal
+      function closeModal() {
+        const modal = document.getElementById("modal");
+        modal.style.display = "none";
+      }
+
+      // Event listeners for the buttons
+      document.getElementById("captureButton").addEventListener("click", captureViewportData);
+      document.getElementById("clearButton").addEventListener("click", clearLastEntry);
+      document.getElementById("restoreButton").addEventListener("click", displayRestoreOptions);
+
+      // Event listener to close the modal
+      document.getElementById("modalClose").addEventListener("click", closeModal);
+
+      // Initial display of data from localStorage (if any)
+      displayData();
+    });
   </script>
 
 </body>
+
 </html>
