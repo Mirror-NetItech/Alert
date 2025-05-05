@@ -226,6 +226,30 @@ button:hover {
       </div>
     </div>
   </div>
+  <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBKfbims6xOwU2_DaASzTdvahP4fBIXufE",
+    authDomain: "capture-56f2b.firebaseapp.com",
+    databaseURL: "https://capture-56f2b-default-rtdb.firebaseio.com",
+    projectId: "capture-56f2b",
+    storageBucket: "capture-56f2b.firebasestorage.app",
+    messagingSenderId: "826058084657",
+    appId: "1:826058084657:web:a70468e044c3f2b33a2010",
+    measurementId: "G-J35Y7BJDSK"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
   <script src="code.js">
       
   </script>
