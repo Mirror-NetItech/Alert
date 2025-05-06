@@ -226,42 +226,13 @@ button:hover {
       </div>
     </div>
   </div>
-  
-      <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script type="module">
-       // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBKfbims6xOwU2_DaASzTdvahP4fBIXufE",
-  authDomain: "capture-56f2b.firebaseapp.com",
-  databaseURL: "https://capture-56f2b-default-rtdb.firebaseio.com",
-  projectId: "capture-56f2b",
-  storageBucket: "capture-56f2b.firebasestorage.app",
-  messagingSenderId: "826058084657",
-  appId: "1:826058084657:web:a70468e044c3f2b33a2010",
-  measurementId: "G-J35Y7BJDSK"
-};
-      // Paste your Firebase configuration here
-        const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL: "YOUR_DATABASE_URL.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-      };
-      
-
-      // Initialize Firebase
-      const app = firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
-
-    </script>
-  <script src="script.js">
-      
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = 'https://udxxiajlxyrjbqgsesra.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey);
+</script>
+<script src="script.js"></script>
 </body>
 
 </html>
